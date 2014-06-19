@@ -1,0 +1,2 @@
+DalSoft.Azure.Common
+====================
