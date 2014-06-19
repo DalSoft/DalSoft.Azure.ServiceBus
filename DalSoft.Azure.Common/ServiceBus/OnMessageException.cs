@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.ServiceBus.Messaging;
 
-namespace DalSoft.Azure.Common.ServiceBus.Queue
+namespace DalSoft.Azure.Common.ServiceBus
 {
     /// <summary>
     /// Wraps any error thrown from the provided OnMessage callback. Message and innerException are set from the orignal exception 

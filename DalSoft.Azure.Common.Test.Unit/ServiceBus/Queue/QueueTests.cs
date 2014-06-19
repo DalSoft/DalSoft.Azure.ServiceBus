@@ -14,7 +14,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
     {
         public const int MaxDeliveryCount = 3;
         private Mock<INamespaceManager> _mockNamespaceManager;
-        private Mock<IQueueClientWrapper> _mockQueueClient;
+        private Mock<IServiceBusWrapper> _mockQueueClient;
 
         [SetUp]
         public void SetUp()
@@ -22,7 +22,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
             _mockNamespaceManager = new Mock<INamespaceManager>();
             _mockNamespaceManager.Setup(x => x.GetQueue(It.IsAny<string>())).Returns(new QueueDescription("test"){ MaxDeliveryCount = MaxDeliveryCount });
             
-            _mockQueueClient = new Mock<IQueueClientWrapper>();
+            _mockQueueClient = new Mock<IServiceBusWrapper>();
         }
 
         [Test]
@@ -30,7 +30,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
         {
             _mockNamespaceManager.Setup(x => x.QueueExists(It.IsAny<string>())).Returns(false);
             
-            new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount);
+            new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount);
 
             _mockNamespaceManager.Verify(x => x.CreateQueue(It.IsAny<string>(), MaxDeliveryCount), Times.Once());
         }
@@ -40,7 +40,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
         {
             _mockNamespaceManager.Setup(x => x.QueueExists(It.IsAny<string>())).Returns(true);
 
-            new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount);
+            new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount);
 
             _mockNamespaceManager.Verify(x => x.CreateQueue(It.IsAny<string>(), MaxDeliveryCount), Times.Never());
         }
@@ -52,7 +52,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
             _mockNamespaceManager.Setup(x => x.QueueExists(It.IsAny<string>())).Returns(true);
             _mockNamespaceManager.Setup(x => x.GetQueue(It.IsAny<string>())).Returns(new QueueDescription("test") { MaxDeliveryCount = differentMaxDeliveryCount });
             
-            Assert.Throws<InvalidOperationException>(()=> new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount), "The Azure SDK 2.3 only lets you set the MaxDeliveryCount when first creating the Queue. For existing queues you will need to change the MaxDeliveryCount manually via the Azure portal.");
+            Assert.Throws<InvalidOperationException>(()=> new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount), "The Azure SDK 2.3 only lets you set the MaxDeliveryCount when first creating the Queue. For existing queues you will need to change the MaxDeliveryCount manually via the Azure portal.");
         }
 
         [Test]
@@ -68,11 +68,11 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
         [Test]
         public void DeleteQueue_TheCorrectQueueIsDeleted()
         {
-            var expectedQueueToBeDeleted = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount).QueueName;
+            var expectedQueueToBeDeleted = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount).QueueName;
 
             _mockNamespaceManager.Setup(x => x.QueueExists(It.IsAny<string>())).Returns(false);
 
-            new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount).DeleteQueue();
+            new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount).DeleteQueue();
 
             _mockNamespaceManager.Verify(x => x.DeleteQueue(expectedQueueToBeDeleted), Times.Once());
         }
@@ -82,14 +82,14 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
         {
             const string queueNameByConvention = "DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue.TestQueue";
 
-            Assert.That(new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount).QueueName, Is.EqualTo(queueNameByConvention));
+            Assert.That(new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount).QueueName, Is.EqualTo(queueNameByConvention));
         }
 
         [Test]
         public void GetQueueName_QueueNameByConventionIsGreaterThan260Characters_ThrowsFormatException()
         {
             const string expectedMessage = "Queue name can't be > 260 characters. Make your namespace or class name shorter.";
-            var exceptionResult = Assert.Throws<FormatException>(() => new Queue<TestQueueGreaterThan260Charactersxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount));
+            var exceptionResult = Assert.Throws<FormatException>(() => new Queue<TestQueueGreaterThan260Charactersxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount));
 
             Assert.That(exceptionResult.Message, Is.EqualTo(expectedMessage));
         }
@@ -97,7 +97,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
         [Test]
         public void Pump_NullOnMessagePassed_ThrowsArgumentNullException()
         {
-            var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount);
+            var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount);
 
             var exceptionResult =  Assert.Throws<ArgumentNullException>(async () => 
                 await queue.Pump(null)
@@ -111,10 +111,10 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
         [Test]
         public void Pump_OnMessageOptionsPassedWithAutoCompleteSetToFalse_ThrowsInvalidOperationException()
         {
-            var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount);
+            var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount);
             var exceptionResult = Assert.Throws<InvalidOperationException>(() => queue.Pump(async message => { await Task.FromResult(0); }, new OnMessageOptions { AutoComplete = false }));
 
-            Assert.That(exceptionResult.Message, Is.EqualTo("This Pump cannot work with OnMessageOptions.AutoComplete set to false"));
+            Assert.That(exceptionResult.Message, Is.EqualTo("This OnMessage cannot work with OnMessageOptions.AutoComplete set to false"));
         }
 
         [Test]
@@ -128,7 +128,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
                    
                });
 
-            var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount);
+            var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount);
 
             queue.Pump(async message => { await Task.FromResult(0); });
         }
@@ -142,7 +142,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
                .Callback((Func<BrokeredMessage, Task> x, OnMessageOptions onMessageOption) => 
                    Assert.That(onMessageOption.MaxConcurrentCalls, Is.EqualTo(expectedOnMessageOptions.MaxConcurrentCalls)));
 
-            var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount);
+            var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount);
 
             queue.Pump(async message => { await Task.FromResult(0); }, expectedOnMessageOptions);
         }
@@ -169,7 +169,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
         [Test]
         public void Enqueue_ProvidedWithANullMessaage_ThrowsArgumentNullException()
         {
-            var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount);
+            var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount);
 
             var exceptionResult = Assert.Throws<ArgumentNullException>(() => queue.Enqueue((TestMessage)null));
 
@@ -181,7 +181,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
         public async void Enqueue_ProvidedWithAMessaage_MessageIsQueued()
         {
             _mockQueueClient.Setup(x => x.SendAsync(It.IsAny<BrokeredMessage>())).Returns(Task.Run(() => new BrokeredMessage(_expectedMessage)));
-            var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount);
+            var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount);
 
             await queue.Enqueue(_expectedMessage);
 
@@ -197,7 +197,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
 
             _mockQueueClient.Setup(x => x.SendAsync(It.IsAny<BrokeredMessage>())).Returns(Task.Run(() => { throw new InvalidOperationException(errorMessage); }));
 
-            var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount);
+            var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount);
 
             await queue.Enqueue(_expectedMessage, exception => { exceptionResult = exception; });
 
@@ -211,7 +211,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
         public async void Enqueue_OnDispose_QueueClientCallsClose()
         {
             _mockQueueClient.Setup(x => x.SendAsync(It.IsAny<BrokeredMessage>())).Returns(Task.Run(() => new BrokeredMessage(_expectedMessage)));
-            using(var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IQueueClientWrapper>().Object, MaxDeliveryCount))
+            using(var queue = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusWrapper>().Object, MaxDeliveryCount))
             {
                 await queue.Enqueue(_expectedMessage);
             }
@@ -220,7 +220,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
         }
 
         private readonly TestMessage _expectedMessage = new TestMessage{ Id=100, Name="Darran Jones" };
-        private IQueueClientWrapper MockPump()
+        private IServiceBusWrapper MockPump()
         {
             _mockQueueClient.Setup(x => x.OnMessageAsync(It.IsAny<Func<BrokeredMessage, Task>>(), It.IsAny<OnMessageOptions>()))
                 .Callback((Func<BrokeredMessage, Task> x, OnMessageOptions onMessageOption) => x(new BrokeredMessage(_expectedMessage)

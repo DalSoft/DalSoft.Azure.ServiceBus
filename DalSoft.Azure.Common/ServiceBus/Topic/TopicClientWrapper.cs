@@ -2,31 +2,34 @@
 using System.Threading.Tasks;
 using Microsoft.ServiceBus.Messaging;
 
-namespace DalSoft.Azure.Common.ServiceBus.Queue
+namespace DalSoft.Azure.Common.ServiceBus.Topic
 {
-    internal class QueueClientWrapper : IServiceBusWrapper
+    internal class TopicClientWrapper : IServiceBusWrapper
     {
-        private readonly QueueClient _queueClient;
+        private readonly TopicClient _topicClient;
+        private readonly SubscriptionClient _subscriptionClient;
 
-        public QueueClientWrapper(string connectionString, string queueName)
+        public TopicClientWrapper(string connectionString, string topicName)
         {
-            _queueClient = QueueClient.CreateFromConnectionString(connectionString, queueName);
             //Since Azure SDK 2.1 we have RetryPolicy .RetryPolicy.Default equals new RetryExponential(TimeSpan.FromSeconds(0.0), TimeSpan.FromSeconds(30.0), TimeSpan.FromSeconds(3.0), TimeSpan.FromSeconds(3.0), 10); which will retry exceptions that have IsTransient a maximum of 10 times http://stackoverflow.com/questions/18499661/servicebus-retryexponential-property-meanings
+            _topicClient = TopicClient.CreateFromConnectionString(connectionString, topicName);
+            _subscriptionClient = SubscriptionClient.CreateFromConnectionString(connectionString, topicName, topicName);
         }
 
         public void OnMessageAsync(Func<BrokeredMessage, Task> onMessageCallback, OnMessageOptions onMessageOptions)
         {
-            _queueClient.OnMessageAsync(onMessageCallback, onMessageOptions);
+            _subscriptionClient.OnMessageAsync(onMessageCallback, onMessageOptions);
         }
 
         public Task SendAsync(BrokeredMessage message)
         {
-            return _queueClient.SendAsync(message);
+            return _topicClient.SendAsync(message);
         }
 
         public void Close()
         {
-            _queueClient.Close();
+            _subscriptionClient.Close();
+            _topicClient.Close();
         }
     }
 }

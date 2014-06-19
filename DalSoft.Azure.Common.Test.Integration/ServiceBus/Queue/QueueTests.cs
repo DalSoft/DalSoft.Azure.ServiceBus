@@ -1,4 +1,5 @@
-﻿using DalSoft.Azure.Common.ServiceBus.Queue;
+﻿using DalSoft.Azure.Common.ServiceBus;
+using DalSoft.Azure.Common.ServiceBus.Queue;
 using Microsoft.ServiceBus.Messaging;
 using NUnit.Framework;
 using System;
@@ -160,12 +161,12 @@ namespace DalSoft.Azure.Common.Test.Integration.ServiceBus.Queue
         [Test]
         public async void Pump_MessageContentTypeIsNullAndProvidedWithOnErrorCallback_InvalidOperationIsPassedBackToOnErrorCallback()
         {
-            const string expectedErrorMessgeForNoContentType = "ContentType must be set to the Type of the brokeredMessage. Please Enqueue the brokeredMessage using DalSoft.Azure.ServiceBus.Queue";
+            const string expectedErrorMessgeForNoContentType = "ContentType must be set to the Type of the brokeredMessage. Please send the brokeredMessage using DalSoft.Azure.ServiceBus.Queue";
             OnMessageException onMessageException = null;
 
             using (var queue = new Queue<TestQueue>(ConnectionString))
             {
-                //Enqueue message without the ContentType set to the type of the message
+                //Publish message without the ContentType set to the type of the message
                 QueueClient.CreateFromConnectionString(ConnectionString, queue.QueueName).Send(new BrokeredMessage(new TestMessage { Id = 1, Name = "My Test" })
                 {
                     ContentType = null
