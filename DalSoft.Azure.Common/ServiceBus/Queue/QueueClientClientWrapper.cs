@@ -2,34 +2,31 @@
 using System.Threading.Tasks;
 using Microsoft.ServiceBus.Messaging;
 
-namespace DalSoft.Azure.Common.ServiceBus.Topic
+namespace DalSoft.Azure.Common.ServiceBus.Queue
 {
-    internal class TopicClientWrapper : IServiceBusWrapper
+    internal class QueueClientClientWrapper : IServiceBusClientWrapper
     {
-        private readonly TopicClient _topicClient;
-        private readonly SubscriptionClient _subscriptionClient;
+        private readonly QueueClient _queueClient;
 
-        public TopicClientWrapper(string connectionString, string topicName)
+        public QueueClientClientWrapper(string connectionString, string queueName)
         {
+            _queueClient = QueueClient.CreateFromConnectionString(connectionString, queueName);
             //Since Azure SDK 2.1 we have RetryPolicy .RetryPolicy.Default equals new RetryExponential(TimeSpan.FromSeconds(0.0), TimeSpan.FromSeconds(30.0), TimeSpan.FromSeconds(3.0), TimeSpan.FromSeconds(3.0), 10); which will retry exceptions that have IsTransient a maximum of 10 times http://stackoverflow.com/questions/18499661/servicebus-retryexponential-property-meanings
-            _topicClient = TopicClient.CreateFromConnectionString(connectionString, topicName);
-            _subscriptionClient = SubscriptionClient.CreateFromConnectionString(connectionString, topicName, topicName);
         }
 
         public void OnMessageAsync(Func<BrokeredMessage, Task> onMessageCallback, OnMessageOptions onMessageOptions)
         {
-            _subscriptionClient.OnMessageAsync(onMessageCallback, onMessageOptions);
+            _queueClient.OnMessageAsync(onMessageCallback, onMessageOptions);
         }
 
         public Task SendAsync(BrokeredMessage message)
         {
-            return _topicClient.SendAsync(message);
+            return _queueClient.SendAsync(message);
         }
 
         public void Close()
         {
-            _subscriptionClient.Close();
-            _topicClient.Close();
+            _queueClient.Close();
         }
     }
 }

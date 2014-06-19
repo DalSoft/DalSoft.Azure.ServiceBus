@@ -1,7 +1,7 @@
 ﻿using DalSoft.Azure.Common.ServiceBus;
 using NUnit.Framework;
 
-namespace Dalsoft.Azure.Common.Test.Integration.ServiceBus.Queue
+namespace DalSoft.Azure.Common.Test.Integration.ServiceBus
 {
     [TestFixture]
     public class NamespaceManagerTests 

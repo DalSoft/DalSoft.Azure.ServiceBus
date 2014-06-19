@@ -1,6 +1,10 @@
-﻿namespace DalSoft.Azure.Common.Test.Integration.ServiceBus.Queue
+﻿namespace DalSoft.Azure.Common.Test.Integration.ServiceBus
 {
     public class TestQueue
+    {
+    }
+
+    public class TestTopic
     {
     }
 

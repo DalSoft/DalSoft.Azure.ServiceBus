@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace DalSoft.Azure.Common.ServiceBus
 {
     /// <summary>For unit test use only</summary>
-    public interface IServiceBusWrapper
+    public interface IServiceBusClientWrapper
     {
         void OnMessageAsync(Func<BrokeredMessage, Task> onMessageCallback, OnMessageOptions onMessageOptions);
         Task SendAsync(BrokeredMessage message);

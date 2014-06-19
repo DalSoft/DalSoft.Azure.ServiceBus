@@ -52,7 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ServiceBus\IServiceBusWrapper.cs" />
+    <Compile Include="ServiceBus\IServiceBusClientWrapper.cs" />
     <Compile Include="ServiceBus\INamespaceManager.cs" />
     <Compile Include="ServiceBus\ServiceBusCommon.cs" />
     <Compile Include="ServiceBus\Queue\IQueue.cs" />
@@ -60,10 +60,10 @@
     <Compile Include="ServiceBus\Topic\ITopic.cs" />
     <Compile Include="ServiceBus\NamespaceManager.cs" />
     <Compile Include="ServiceBus\OnMessageException.cs" />
-    <Compile Include="ServiceBus\Queue\QueueClientWrapper.cs" />
+    <Compile Include="ServiceBus\Queue\QueueClientClientWrapper.cs" />
     <Compile Include="CloudServices\WorkerRole\TaskWorker.cs" />
     <Compile Include="ServiceBus\Topic\Topic.cs" />
-    <Compile Include="ServiceBus\Topic\TopicClientWrapper.cs" />
+    <Compile Include="ServiceBus\Topic\TopicClientClientWrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

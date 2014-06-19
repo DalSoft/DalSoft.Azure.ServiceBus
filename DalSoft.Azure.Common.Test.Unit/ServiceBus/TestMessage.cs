@@ -1,4 +1,4 @@
-﻿namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Queue
+﻿namespace DalSoft.Azure.Common.Test.Unit.ServiceBus
 {
     public class TestQueue
     {
@@ -6,6 +6,13 @@
 
     public class TestQueueGreaterThan260Charactersxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     {}
+
+    public class TestTopic
+    {
+    }
+
+    public class TestTopicGreaterThan50Charactersxxxxxxxxxxxxxxxxxxx
+    { }
 
     public class TestMessage
     {

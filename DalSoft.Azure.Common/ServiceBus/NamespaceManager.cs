@@ -38,9 +38,9 @@ namespace DalSoft.Azure.Common.ServiceBus
             return _namespaceManager.TopicExists(path);
         }
 
-        public bool SubscriptionExists(string path)
+        public bool SubscriptionExists(string path, string subscriptionName)
         {
-            return _namespaceManager.SubscriptionExists(path, path);
+            return _namespaceManager.SubscriptionExists(path, subscriptionName);
         }
 
         public QueueDescription CreateQueue(string path, int maxDeliveryCount)
@@ -53,9 +53,9 @@ namespace DalSoft.Azure.Common.ServiceBus
             return _namespaceManager.CreateTopic(new TopicDescription(path));
         }
 
-        public SubscriptionDescription CreateSubscription(string path)
+        public SubscriptionDescription CreateSubscription(string path, string subscriptionName)
         {
-            return _namespaceManager.CreateSubscription(path, path);
+            return _namespaceManager.CreateSubscription(path, subscriptionName);
         }
 
         public void DeleteQueue(string path)

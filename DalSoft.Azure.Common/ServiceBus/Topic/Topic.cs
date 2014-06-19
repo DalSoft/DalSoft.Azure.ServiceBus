@@ -10,25 +10,33 @@ namespace DalSoft.Azure.Common.ServiceBus.Topic
         private readonly INamespaceManager _namespaceManager;
         private readonly ServiceBusCommon<TTopic> _serviceBusCommon;
         public string TopicName { get { return ServiceBusCommon<TTopic>.GetName(); } }
+        public string SubscriptionName { get; private set; }
 
-        public Topic(string connectionString) : this(new NamespaceManager(connectionString), new TopicClientWrapper(connectionString, ServiceBusCommon<TTopic>.GetName()), () => CreateSubscriberClient(connectionString)) { }
+        public Topic(string connectionString) : this(new NamespaceManager(connectionString), new TopicClientClientWrapper(connectionString, ServiceBusCommon<TTopic>.GetName()), null) { }
 
-        internal Topic(INamespaceManager namespaceManager, IServiceBusWrapper serviceBus, Func<IServiceBusWrapper> subscriberClientClient) //Unit test seam 
+        internal Topic(INamespaceManager namespaceManager, IServiceBusClientWrapper serviceBusClient, Func<IServiceBusClientWrapper> subscriberClientClient) //Unit test seam 
         {
+            SubscriptionName = Guid.NewGuid().ToString();
+            
             _namespaceManager = namespaceManager;
 
             if (!_namespaceManager.TopicExists(ServiceBusCommon<TTopic>.GetName()))
                 _namespaceManager.CreateTopic(ServiceBusCommon<TTopic>.GetName());
 
-            if (!_namespaceManager.SubscriptionExists(ServiceBusCommon<TTopic>.GetName()))
-                _namespaceManager.CreateSubscription(ServiceBusCommon<TTopic>.GetName());
+            if (!_namespaceManager.SubscriptionExists(ServiceBusCommon<TTopic>.GetName(), SubscriptionName)) //TODO max delivery count is on subscribers
+                _namespaceManager.CreateSubscription(ServiceBusCommon<TTopic>.GetName(), SubscriptionName);
 
-            _serviceBusCommon = new ServiceBusCommon<TTopic>(serviceBus, subscriberClientClient);
+            subscriberClientClient = () => new TopicClientClientWrapper(_namespaceManager.ConnectionString, ServiceBusCommon<TTopic>.GetName())
+            {
+                SubscriptionName = SubscriptionName
+            };
+
+            _serviceBusCommon = new ServiceBusCommon<TTopic>(serviceBusClient, subscriberClientClient);
         }
 
         public void DeleteTopic()
         {
-            _namespaceManager.DeleteQueue(ServiceBusCommon<TTopic>.GetName());
+            _namespaceManager.DeleteTopic(ServiceBusCommon<TTopic>.GetName());
         }
 
         public Task Subscribe(Func<dynamic, Task> onMessage)
@@ -104,9 +112,12 @@ namespace DalSoft.Azure.Common.ServiceBus.Topic
            return _serviceBusCommon.Send<TMessage>(brokeredMessage, onError);
         }
 
-        private static IServiceBusWrapper CreateSubscriberClient(string connectionString)
+        private static IServiceBusClientWrapper CreateSubscriberClient(string connectionString, Topic<TTopic> topic)
         {   //Used so we ensure we manage the lifecycle of the pump and are able to close it
-            return new TopicClientWrapper(connectionString, ServiceBusCommon<TTopic>.GetName());
+            return new TopicClientClientWrapper(connectionString, ServiceBusCommon<TTopic>.GetName())
+            {
+                SubscriptionName = topic.SubscriptionName
+            };
         }
 
         public void Dispose()

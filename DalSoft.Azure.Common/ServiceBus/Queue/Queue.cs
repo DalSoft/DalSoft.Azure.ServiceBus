@@ -12,11 +12,11 @@ namespace DalSoft.Azure.Common.ServiceBus.Queue
         private readonly ServiceBusCommon<TQueue> _serviceBusCommon;
         public string QueueName { get { return ServiceBusCommon<TQueue>.GetName(); } }
 
-        public Queue(string connectionString) : this(new NamespaceManager(connectionString), new QueueClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), null) { }
+        public Queue(string connectionString) : this(new NamespaceManager(connectionString), new QueueClientClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), null) { }
 
-        public Queue(string connectionString, int maxDeliveryCount) : this(new NamespaceManager(connectionString), new QueueClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), maxDeliveryCount) { }
+        public Queue(string connectionString, int maxDeliveryCount) : this(new NamespaceManager(connectionString), new QueueClientClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), maxDeliveryCount) { }
 
-        internal Queue(INamespaceManager namespaceManager, IServiceBusWrapper serviceBus, Func<IServiceBusWrapper> queuePumpClient, int? maxDeliveryCount) //Unit test seam 
+        internal Queue(INamespaceManager namespaceManager, IServiceBusClientWrapper serviceBusClient, Func<IServiceBusClientWrapper> queuePumpClient, int? maxDeliveryCount) //Unit test seam 
         {
             _namespaceManager = namespaceManager;
 
@@ -30,7 +30,7 @@ namespace DalSoft.Azure.Common.ServiceBus.Queue
                     throw new InvalidOperationException("The Azure SDK 2.3 only lets you set the MaxDeliveryCount when first creating the Queue. For existing queues you will need to change the MaxDeliveryCount manually via the Azure portal.");
             }
 
-            _serviceBusCommon = new ServiceBusCommon<TQueue>(serviceBus, queuePumpClient);
+            _serviceBusCommon = new ServiceBusCommon<TQueue>(serviceBusClient, queuePumpClient);
         }
 
         public void DeleteQueue()
@@ -111,9 +111,9 @@ namespace DalSoft.Azure.Common.ServiceBus.Queue
            return _serviceBusCommon.Send<TMessage>(brokeredMessage, onError);
         }
 
-        private static IServiceBusWrapper CreatePumpClient(string connectionString)
+        private static IServiceBusClientWrapper CreatePumpClient(string connectionString)
         {   //Used so we ensure we manage the lifecycle of the pump and are able to close it
-            return new QueueClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName());
+            return new QueueClientClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName());
         }
 
         public void Dispose()

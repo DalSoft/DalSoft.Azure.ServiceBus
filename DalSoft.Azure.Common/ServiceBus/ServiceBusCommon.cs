@@ -10,13 +10,13 @@ namespace DalSoft.Azure.Common.ServiceBus
 {
     internal class ServiceBusCommon<TQueue> : IDisposable
     {
-        private readonly IServiceBusWrapper _serviceBus;
-        private readonly Func<IServiceBusWrapper> _onMessageClient;
+        private readonly IServiceBusClientWrapper _serviceBusClient;
+        private readonly Func<IServiceBusClientWrapper> _onMessageClient;
         private CancellationTokenSource _cancellationTokenSource;
        
-        internal ServiceBusCommon(IServiceBusWrapper serviceBus, Func<IServiceBusWrapper> onMessageClient) 
+        internal ServiceBusCommon(IServiceBusClientWrapper serviceBusClient, Func<IServiceBusClientWrapper> onMessageClient) 
         {
-            _serviceBus = serviceBus;
+            _serviceBusClient = serviceBusClient;
             _onMessageClient = onMessageClient;
         }
 
@@ -89,7 +89,7 @@ namespace DalSoft.Azure.Common.ServiceBus
 
             onError = onError ?? (exception => { throw exception; });
 
-            return _serviceBus
+            return _serviceBusClient
                     .SendAsync(new BrokeredMessage(message) { ContentType = typeof(TMessage).AssemblyQualifiedName })
                     .ContinueWith(task => HandleEnqueueError(task.Exception, onError));
         }
@@ -112,17 +112,17 @@ namespace DalSoft.Azure.Common.ServiceBus
             brokeredMessage.ContentType = typeof(TMessage).AssemblyQualifiedName;
             brokeredMessage.Clone().GetBody(); //Will throw if the TMessage and the actual type provided to the brokeredmessage differ
 
-            return _serviceBus
+            return _serviceBusClient
                     .SendAsync(brokeredMessage)
                     .ContinueWith(task => HandleEnqueueError(task.Exception, onError));
         }
 
-        public static string GetName()
+        internal static string GetName()
         {
             var queueName = typeof(TQueue).FullName;
 
             if (queueName.Length > 260)
-                throw new FormatException(string.Format("Queue name can't be > 260 characters. Make your namespace or class name shorter."));
+                throw new ArgumentException(string.Format("Queue name can't be > 260 characters. Make your namespace or class name shorter."));
 
             return queueName;
         }
@@ -170,7 +170,7 @@ namespace DalSoft.Azure.Common.ServiceBus
                 if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
                     _cancellationTokenSource.Cancel();
 
-                _serviceBus.Close();
+                _serviceBusClient.Close();
             }   // ReSharper disable once EmptyGeneralCatchClause
             catch
             {
