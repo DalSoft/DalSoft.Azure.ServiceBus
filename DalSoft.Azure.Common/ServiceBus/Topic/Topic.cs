@@ -13,6 +13,12 @@ namespace DalSoft.Azure.Common.ServiceBus.Topic
         public string TopicName { get { return ServiceBusCommon<TTopic>.GetName(); } }
         public string SubscriptionId { get; private set; }
 
+        /// <remarks>Subscription is created on demand using SubscriptionId on the first call to Subscribe()</remarks>
+
+        public Topic(string connectionString)
+            : this(new NamespaceManager(connectionString),
+            new TopicClientWrapper(connectionString, ServiceBusCommon<TTopic>.GetName()), null, false, null) { }
+
         public Topic(string connectionString, string subscriptionId)
             : this(new NamespaceManager(connectionString),
             new TopicClientWrapper(connectionString, ServiceBusCommon<TTopic>.GetName()), subscriptionId, true, () => CreateSubscriberClient(connectionString, subscriptionId)) { }
@@ -21,12 +27,8 @@ namespace DalSoft.Azure.Common.ServiceBus.Topic
             : this(new NamespaceManager(connectionString),
             new TopicClientWrapper(connectionString, ServiceBusCommon<TTopic>.GetName()), subscriptionId, deleteSubscriptionOnDispose, () => CreateSubscriberClient(connectionString, subscriptionId)) { }
 
-        internal Topic(INamespaceManager namespaceManager, IServiceBusClientWrapper serviceBusClient, string subscriptionId, bool deleteSubscriptionOnDispose, Func<IServiceBusClientWrapper> subscriberClientClient) //Unit test seam 
+        internal Topic(INamespaceManager namespaceManager, IServiceBusClientWrapper serviceBusClient, string subscriptionId, bool deleteSubscriptionOnDispose, Func<IServiceBusClientWrapper> subscriberClient) //Unit test seam 
         {
-            if (string.IsNullOrWhiteSpace(subscriptionId)) throw new ArgumentNullException("subscriptionId", "Please supply a subscriptionId for your subscription");
-            
-            if (subscriptionId.Length > 50) throw new ArgumentException("subscriptionId can't be > 50 characters", "subscriptionId");
-            
             SubscriptionId = subscriptionId;
             
             _namespaceManager = namespaceManager;
@@ -35,10 +37,7 @@ namespace DalSoft.Azure.Common.ServiceBus.Topic
             if (!_namespaceManager.TopicExists(ServiceBusCommon<TTopic>.GetName()))
                 _namespaceManager.CreateTopic(ServiceBusCommon<TTopic>.GetName());
 
-            if (!_namespaceManager.SubscriptionExists(ServiceBusCommon<TTopic>.GetName(), SubscriptionId)) //TODO max delivery count is on subscribers
-                _namespaceManager.CreateSubscription(ServiceBusCommon<TTopic>.GetName(), SubscriptionId);
-
-            _serviceBusCommon = new ServiceBusCommon<TTopic>(serviceBusClient, subscriberClientClient);
+            _serviceBusCommon = new ServiceBusCommon<TTopic>(serviceBusClient, subscriberClient);
         }
 
         public void DeleteTopic()
@@ -80,10 +79,19 @@ namespace DalSoft.Azure.Common.ServiceBus.Topic
         /// <param name="onMessageOptions">See MSDN documentation for onMessageOptions</param>
         /// <param name="cancellationTokenSource">Used to manually stop the pump. Alternatively just dispose and the pump is cancelled and cleaned up for you.</param>
         /// <exception cref="OnMessageException">Exception type that will be passed the the onError calling  receiving a brokeredMessage from your onMessage Callback</exception>
-        /// <remarks>OnMessage may only be called once per instance.</remarks>
+        /// <remarks>OnMessage may only be called once per instance. Subscription is created on demand using SubscriptionId on the first call to Subscribe().</remarks>
         public Task Subscribe(Func<dynamic, Task> onMessage, Action<Exception> onError, OnMessageOptions onMessageOptions, CancellationTokenSource cancellationTokenSource)
         {
+            // ReSharper disable NotResolvedInText
+            if (string.IsNullOrWhiteSpace(SubscriptionId)) throw new ArgumentNullException("subscriptionId", "Please supply a subscriptionId to the constructor for your subscription");
+
+            if (SubscriptionId.Length > 50) throw new ArgumentException("subscriptionId provided to the constructor can't be > 50 characters", "subscriptionId");
+            
+            if (!_namespaceManager.SubscriptionExists(ServiceBusCommon<TTopic>.GetName(), SubscriptionId)) //TODO max delivery count is on subscribers
+                _namespaceManager.CreateSubscription(ServiceBusCommon<TTopic>.GetName(), SubscriptionId);
+            
             return _serviceBusCommon.OnMessage(onMessage, onError, onMessageOptions, cancellationTokenSource);
+            // ReSharper restore NotResolvedInText
         }
 
         public Task Publish<TMessage>(TMessage message) where TMessage : class, new() 
@@ -129,9 +137,9 @@ namespace DalSoft.Azure.Common.ServiceBus.Topic
 
         public void Dispose()
         {
-            if (_deleteSubscriptionOnDispose)
+            if (_deleteSubscriptionOnDispose && SubscriptionId!=null)
                 _namespaceManager.DeleteSubscription(ServiceBusCommon<TTopic>.GetName(), SubscriptionId);
-            
+
             _serviceBusCommon.Dispose();       
         }
     }

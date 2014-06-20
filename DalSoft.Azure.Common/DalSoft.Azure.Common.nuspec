@@ -11,12 +11,10 @@
     <!-- <iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl> -->
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>
-First release aims to make working with the Azure Service Bus as simple as possible. 
-Has sensible defaults and is fully injectable and testable. 
-
+Aims to make working with the Azure Service Bus as simple as possible. Has sensible defaults and is fully injectable and testable. 
 Features include automatically managing subscriptions/closing connections, enqueue/message pump using Queues, and publish/subscribe using topics.
 	</description>
-    <releaseNotes>First release containing Service Bus Queue and Topic functionality.</releaseNotes>
+    <releaseNotes>Subscriptions now only created on first call to Subscribe()</releaseNotes>
     <copyright>Copyright 2014</copyright>
     <tags>Azure ServiceBus Queue Topic</tags>
   </metadata>
