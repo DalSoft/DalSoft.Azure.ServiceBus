@@ -67,5 +67,10 @@ namespace DalSoft.Azure.Common.ServiceBus
         {
             _namespaceManager.DeleteTopic(path);
         }
+
+        public void DeleteSubscription(string path, string subscriptionName)
+        {
+            _namespaceManager.DeleteSubscription(path, subscriptionName);
+        }
     }
 }

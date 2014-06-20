@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace DalSoft.Azure.Common.ServiceBus.Topic
 {
-    internal class TopicClientClientWrapper : IServiceBusClientWrapper
+    internal class TopicClientWrapper : IServiceBusClientWrapper
     {
         private readonly string _connectionString;
         private readonly string _topicName;
@@ -13,7 +13,7 @@ namespace DalSoft.Azure.Common.ServiceBus.Topic
         private SubscriptionClient _subscriptionClient;
 
         
-        public TopicClientClientWrapper(string connectionString, string topicName)
+        public TopicClientWrapper(string connectionString, string topicName)
         {
             _connectionString = connectionString;
             _topicName = topicName;

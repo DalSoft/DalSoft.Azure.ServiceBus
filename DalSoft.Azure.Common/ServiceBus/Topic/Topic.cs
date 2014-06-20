@@ -8,28 +8,35 @@ namespace DalSoft.Azure.Common.ServiceBus.Topic
     public sealed class Topic<TTopic> : ITopic<TTopic>
     {
         private readonly INamespaceManager _namespaceManager;
+        private readonly bool _deleteSubscriptionOnDispose;
         private readonly ServiceBusCommon<TTopic> _serviceBusCommon;
         public string TopicName { get { return ServiceBusCommon<TTopic>.GetName(); } }
-        public string SubscriptionName { get; private set; }
+        public string SubscriptionId { get; private set; }
 
-        public Topic(string connectionString) : this(new NamespaceManager(connectionString), new TopicClientClientWrapper(connectionString, ServiceBusCommon<TTopic>.GetName()), null) { }
+        public Topic(string connectionString, string subscriptionId)
+            : this(new NamespaceManager(connectionString),
+            new TopicClientWrapper(connectionString, ServiceBusCommon<TTopic>.GetName()), subscriptionId, true, () => CreateSubscriberClient(connectionString, subscriptionId)) { }
 
-        internal Topic(INamespaceManager namespaceManager, IServiceBusClientWrapper serviceBusClient, Func<IServiceBusClientWrapper> subscriberClientClient) //Unit test seam 
+        public Topic(string connectionString, string subscriptionId, bool deleteSubscriptionOnDispose)
+            : this(new NamespaceManager(connectionString),
+            new TopicClientWrapper(connectionString, ServiceBusCommon<TTopic>.GetName()), subscriptionId, deleteSubscriptionOnDispose, () => CreateSubscriberClient(connectionString, subscriptionId)) { }
+
+        internal Topic(INamespaceManager namespaceManager, IServiceBusClientWrapper serviceBusClient, string subscriptionId, bool deleteSubscriptionOnDispose, Func<IServiceBusClientWrapper> subscriberClientClient) //Unit test seam 
         {
-            SubscriptionName = Guid.NewGuid().ToString();
+            if (string.IsNullOrWhiteSpace(subscriptionId)) throw new ArgumentNullException("subscriptionId", "Please supply a subscriptionId for your subscription");
+            
+            if (subscriptionId.Length > 50) throw new ArgumentException("subscriptionId can't be > 50 characters", "subscriptionId");
+            
+            SubscriptionId = subscriptionId;
             
             _namespaceManager = namespaceManager;
+            _deleteSubscriptionOnDispose = deleteSubscriptionOnDispose;
 
             if (!_namespaceManager.TopicExists(ServiceBusCommon<TTopic>.GetName()))
                 _namespaceManager.CreateTopic(ServiceBusCommon<TTopic>.GetName());
 
-            if (!_namespaceManager.SubscriptionExists(ServiceBusCommon<TTopic>.GetName(), SubscriptionName)) //TODO max delivery count is on subscribers
-                _namespaceManager.CreateSubscription(ServiceBusCommon<TTopic>.GetName(), SubscriptionName);
-
-            subscriberClientClient = () => new TopicClientClientWrapper(_namespaceManager.ConnectionString, ServiceBusCommon<TTopic>.GetName())
-            {
-                SubscriptionName = SubscriptionName
-            };
+            if (!_namespaceManager.SubscriptionExists(ServiceBusCommon<TTopic>.GetName(), SubscriptionId)) //TODO max delivery count is on subscribers
+                _namespaceManager.CreateSubscription(ServiceBusCommon<TTopic>.GetName(), SubscriptionId);
 
             _serviceBusCommon = new ServiceBusCommon<TTopic>(serviceBusClient, subscriberClientClient);
         }
@@ -112,16 +119,19 @@ namespace DalSoft.Azure.Common.ServiceBus.Topic
            return _serviceBusCommon.Send<TMessage>(brokeredMessage, onError);
         }
 
-        private static IServiceBusClientWrapper CreateSubscriberClient(string connectionString, Topic<TTopic> topic)
+        private static IServiceBusClientWrapper CreateSubscriberClient(string connectionString, string subscriptionId)
         {   //Used so we ensure we manage the lifecycle of the pump and are able to close it
-            return new TopicClientClientWrapper(connectionString, ServiceBusCommon<TTopic>.GetName())
+            return new TopicClientWrapper(connectionString, ServiceBusCommon<TTopic>.GetName())
             {
-                SubscriptionName = topic.SubscriptionName
+                SubscriptionName = subscriptionId
             };
         }
 
         public void Dispose()
         {
+            if (_deleteSubscriptionOnDispose)
+                _namespaceManager.DeleteSubscription(ServiceBusCommon<TTopic>.GetName(), SubscriptionId);
+            
             _serviceBusCommon.Dispose();       
         }
     }

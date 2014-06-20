@@ -11,9 +11,6 @@
     {
     }
 
-    public class TestTopicGreaterThan50Charactersxxxxxxxxxxxxxxxxxxx
-    { }
-
     public class TestMessage
     {
         public int Id { get; set; }

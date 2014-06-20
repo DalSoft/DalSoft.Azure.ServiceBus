@@ -10,6 +10,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Topic
     [TestFixture]
     public class TopicTests
     {
+        const string TestSubscriptionId = "TestSubscriptionId";
         private Mock<INamespaceManager> _mockNamespaceManager;
         private Mock<IServiceBusClientWrapper> _mockTopicClient;
 
@@ -23,11 +24,37 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Topic
         }
 
         [Test]
+        public void Ctor_SubscriptionIdIsNull_ThrowsArgumentNullException()
+        {
+            const string expectedMessage = "Please supply a subscriptionId for your subscription";
+            var exceptionResult = Assert.Throws<ArgumentNullException>(() => new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, null, true, () => new Mock<IServiceBusClientWrapper>().Object));
+
+            Assert.That(exceptionResult.Message, Is.StringContaining(expectedMessage));
+        }
+
+        [Test]
+        public void Ctor_SubscriptionIdIsGreaterThan50Characters_ThrowsArgumentException()
+        {
+            const string expectedMessage = "subscriptionId can't be > 50 characters";
+            const string subscriptionIdGreaterThan50Characters = "subscriptionIdGreaterThan50Charactersxxxxxxxxxxxxxx";
+            var exceptionResult = Assert.Throws<ArgumentException>(() => new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, subscriptionIdGreaterThan50Characters, true, () => new Mock<IServiceBusClientWrapper>().Object));
+
+            Assert.That(exceptionResult.Message, Is.StringContaining(expectedMessage));
+        }
+
+        [Test]
+        public void Ctor_SubscriptionId_IsSet()
+        {
+            Assert.That(new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, TestSubscriptionId, true, () => new Mock<IServiceBusClientWrapper>().Object).SubscriptionId, 
+                Is.EqualTo(TestSubscriptionId));
+        }
+
+        [Test]
         public void Ctor_TopicDoesNotExist_TopicIsCreated()
         {
             _mockNamespaceManager.Setup(x => x.QueueExists(It.IsAny<string>())).Returns(false);
 
-            new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, () => new Mock<IServiceBusClientWrapper>().Object);
+            new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, TestSubscriptionId, true, () => new Mock<IServiceBusClientWrapper>().Object);
 
             _mockNamespaceManager.Verify(x => x.CreateTopic(It.IsAny<string>()), Times.Once());
         }
@@ -37,7 +64,7 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Topic
         {
             _mockNamespaceManager.Setup(x => x.TopicExists(It.IsAny<string>())).Returns(true);
 
-            new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, () => new Mock<IServiceBusClientWrapper>().Object);
+            new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, TestSubscriptionId, true, () => new Mock<IServiceBusClientWrapper>().Object);
 
             _mockNamespaceManager.Verify(x => x.CreateTopic(It.IsAny<string>()), Times.Never());
         }
@@ -45,31 +72,53 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Topic
         [Test]
         public void Ctor_SubscriptionDoesNotExist_SubscriptionIsCreated()
         {
-            _mockNamespaceManager.Setup(x => x.SubscriptionExists(It.IsAny<string>())).Returns(false);
+            _mockNamespaceManager.Setup(x => x.SubscriptionExists(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
 
-            new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, () => new Mock<IServiceBusClientWrapper>().Object);
+            new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, TestSubscriptionId, true, () => new Mock<IServiceBusClientWrapper>().Object);
 
-            _mockNamespaceManager.Verify(x => x.CreateSubscription(It.IsAny<string>()), Times.Once());
+            _mockNamespaceManager.Verify(x => x.CreateSubscription(It.IsAny<string>(), It.IsAny<string>()), Times.Once());
         }
 
         [Test]
         public void Ctor_SubscriptionDoesExist_SubscriptionIsNotCreated()
         {
-            _mockNamespaceManager.Setup(x => x.SubscriptionExists(It.IsAny<string>())).Returns(true);
+            _mockNamespaceManager.Setup(x => x.SubscriptionExists(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
 
-            new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, () => new Mock<IServiceBusClientWrapper>().Object);
+            new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, TestSubscriptionId, true, () => new Mock<IServiceBusClientWrapper>().Object);
 
-            _mockNamespaceManager.Verify(x => x.CreateSubscription(It.IsAny<string>()), Times.Never());
+            _mockNamespaceManager.Verify(x => x.CreateSubscription(It.IsAny<string>(), It.IsAny<string>()), Times.Never());
+        }
+
+        [Test]
+        public void Ctor_DeleteSubscriptionOnDisposeIsTrue_DeletesSubscriptionOnDispose()
+        {
+
+            using (var topic = new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, TestSubscriptionId, true, () => new Mock<IServiceBusClientWrapper>().Object))
+            {
+            }
+
+            _mockNamespaceManager.Verify(x => x.DeleteSubscription(ServiceBusCommon<TestTopic>.GetName(), TestSubscriptionId), Times.Once());
+        }
+
+        [Test]
+        public void Ctor_DeleteSubscriptionOnDisposeIsFalse_DeletesSubscriptionOnDispose()
+        {
+
+            using (var topic = new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, TestSubscriptionId, false, () => new Mock<IServiceBusClientWrapper>().Object))
+            {
+            }
+
+            _mockNamespaceManager.Verify(x => x.DeleteSubscription(ServiceBusCommon<TestTopic>.GetName(), TestSubscriptionId), Times.Never());
         }
 
         [Test]
         public void DeleteTopic_TheCorrectQueueIsDeleted()
         {
-            var expectedQueueToBeDeleted = new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, () => new Mock<IServiceBusClientWrapper>().Object).TopicName;
+            var expectedQueueToBeDeleted = new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, TestSubscriptionId, true, () => new Mock<IServiceBusClientWrapper>().Object).TopicName;
 
             _mockNamespaceManager.Setup(x => x.TopicExists(It.IsAny<string>())).Returns(false);
 
-            new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, () => new Mock<IServiceBusClientWrapper>().Object).DeleteTopic();
+            new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, TestSubscriptionId, true, () => new Mock<IServiceBusClientWrapper>().Object).DeleteTopic();
 
             _mockNamespaceManager.Verify(x => x.DeleteTopic(expectedQueueToBeDeleted), Times.Once());
         }
@@ -79,31 +128,14 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Topic
         {
             const string queueNameByConvention = "DalSoft.Azure.Common.Test.Unit.ServiceBus.TestTopic";
 
-            Assert.That(new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, () => new Mock<IServiceBusClientWrapper>().Object).TopicName, Is.EqualTo(queueNameByConvention));
+            Assert.That(new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, TestSubscriptionId, true, () => new Mock<IServiceBusClientWrapper>().Object).TopicName, Is.EqualTo(queueNameByConvention));
         }
 
         [Test]
         public void GetTopicName_TopicNameByConventionIsGreaterThan260Characters_ThrowsArgumentException()
         {
             const string expectedMessage = "Queue name can't be > 260 characters. Make your namespace or class name shorter.";
-            var exceptionResult = Assert.Throws<ArgumentException>(() => new Topic<TestQueueGreaterThan260Charactersxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>(_mockNamespaceManager.Object, _mockTopicClient.Object, () => new Mock<IServiceBusClientWrapper>().Object));
-
-            Assert.That(exceptionResult.Message, Is.EqualTo(expectedMessage));
-        }
-
-        [Test]
-        public void GetSubscriptionName_SubscriptionName_ByConventionIsReturned()
-        {
-            const string queueNameByConvention = "TestTopic";
-
-            Assert.That(new Topic<TestTopic>(_mockNamespaceManager.Object, _mockTopicClient.Object, () => new Mock<IServiceBusClientWrapper>().Object).SubscriptionName, Is.EqualTo(queueNameByConvention));
-        }
-
-        [Test]
-        public void GetSubscriptionName_SubscriptionNameByConventionIsGreaterThan50Characters_ThrowsArgumentException()
-        {
-            const string expectedMessage = "Subscription name can't be > 50 characters. Make your class name shorter.";
-            var exceptionResult = Assert.Throws<ArgumentException>(() => new Topic<TestTopicGreaterThan50Charactersxxxxxxxxxxxxxxxxxxx>(_mockNamespaceManager.Object, _mockTopicClient.Object, ()=>new Mock<IServiceBusClientWrapper>().Object));
+            var exceptionResult = Assert.Throws<ArgumentException>(() => new Topic<TestQueueGreaterThan260Charactersxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>(_mockNamespaceManager.Object, _mockTopicClient.Object, TestSubscriptionId, true, () => new Mock<IServiceBusClientWrapper>().Object));
 
             Assert.That(exceptionResult.Message, Is.EqualTo(expectedMessage));
         }

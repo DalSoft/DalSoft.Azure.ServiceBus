@@ -63,7 +63,7 @@
     <Compile Include="ServiceBus\Queue\QueueClientClientWrapper.cs" />
     <Compile Include="CloudServices\WorkerRole\TaskWorker.cs" />
     <Compile Include="ServiceBus\Topic\Topic.cs" />
-    <Compile Include="ServiceBus\Topic\TopicClientClientWrapper.cs" />
+    <Compile Include="ServiceBus\Topic\TopicClientWrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -14,6 +14,7 @@ namespace DalSoft.Azure.Common.ServiceBus
         TopicDescription GetTopic(string path);
         void DeleteQueue(string path);
         void DeleteTopic(string path);
+        void DeleteSubscription(string path, string subscriptionName);
         string ConnectionString { get; }
     }
 }

@@ -1,4 +1,8 @@
-﻿using DalSoft.Azure.Common.ServiceBus.Topic;
+﻿using System;
+using System.Diagnostics;
+using DalSoft.Azure.Common.ServiceBus.Topic;
+using Microsoft.ServiceBus;
+using Microsoft.ServiceBus.Messaging;
 using NUnit.Framework;
 using System.Configuration;
 using System.Threading;
@@ -11,7 +15,7 @@ namespace DalSoft.Azure.Common.Test.Integration.ServiceBus.Topic
     public class TopicTests
     {
         private static readonly object Lock = new object();
-        private const int TestTimeout = 200000;
+        private const int TestTimeout = 1500;
         private static readonly string ConnectionString = ConfigurationManager.AppSettings["Microsoft.ServiceBus.ConnectionString"];
 
         [SetUp]
@@ -23,40 +27,42 @@ namespace DalSoft.Azure.Common.Test.Integration.ServiceBus.Topic
         [TearDown]
         public void TearDown()
         {
-           new Topic<TestTopic>(ConnectionString).DeleteTopic(); //Ensure queue is delete at the end of each test
+           new Topic<TestTopic>(ConnectionString, Guid.NewGuid().ToString()).DeleteTopic(); //Ensure queue is delete at the end of each test
            Monitor.Exit(Lock); //Access the TestQueue one test at a time
         }
 
         [Test]
-        public async void Subscribe_ProvidedWithMessage_MessageIsReceivedByEachubscriberAndRemovedFromQueue()
+        public async void Subscribe_ProvidedWithMessage_MessageIsReceivedByEachSubscriberAndRemoved()
         {
             TestMessage receievedMessage = null;
-            var cancellationTokenSource = new CancellationTokenSource(TestTimeout);
             var receivedCount = 0;
 
-            var topic = new Topic<TestTopic>(ConnectionString);
+            var topic = new Topic<TestTopic>(ConnectionString, Guid.NewGuid().ToString());
             topic.Subscribe(async message => //First Subscriber
             {
                 receievedMessage = message;
                 receivedCount++;
                 await Task.FromResult(0);
-            }, cancellationTokenSource); //Give it time to process the message
+            }, new CancellationTokenSource(TestTimeout)); //Give it time to process the message
 
-
-            var topic2 = new Topic<TestTopic>(ConnectionString);
+            var topic2 = new Topic<TestTopic>(ConnectionString, Guid.NewGuid().ToString());
             topic2.Subscribe(async message => //second Subscriber
             {
                 receievedMessage = message;
                 receivedCount++;
                 await Task.FromResult(0);
-            }, cancellationTokenSource); //Give it time to process the message
+            }, new CancellationTokenSource(TestTimeout)); 
             
             await topic2.Publish(new TestMessage { Id = 1, Name = "My Test" });
-
-            await Task.Delay(15000);
+            await Task.Delay(TestTimeout * 2); //Give it time to process the message
+            
             Assert.That(receivedCount, Is.EqualTo(2));
             Assert.That(receievedMessage.Id, Is.EqualTo(1));
-            
+            Debug.WriteLine(NamespaceManager.CreateFromConnectionString(ConnectionString).GetSubscription(topic.TopicName, topic.SubscriptionId).MessageCount);
+            Debug.WriteLine(NamespaceManager.CreateFromConnectionString(ConnectionString).GetSubscription(topic2.TopicName, topic2.SubscriptionId).MessageCount);
+
+            topic.Dispose();
+            topic2.Dispose();
         }
     }
 }
