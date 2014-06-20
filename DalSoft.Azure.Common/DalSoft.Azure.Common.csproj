@@ -60,7 +60,7 @@
     <Compile Include="ServiceBus\Topic\ITopic.cs" />
     <Compile Include="ServiceBus\NamespaceManager.cs" />
     <Compile Include="ServiceBus\OnMessageException.cs" />
-    <Compile Include="ServiceBus\Queue\QueueClientClientWrapper.cs" />
+    <Compile Include="ServiceBus\Queue\QueueClientWrapper.cs" />
     <Compile Include="CloudServices\WorkerRole\TaskWorker.cs" />
     <Compile Include="ServiceBus\Topic\Topic.cs" />
     <Compile Include="ServiceBus\Topic\TopicClientWrapper.cs" />

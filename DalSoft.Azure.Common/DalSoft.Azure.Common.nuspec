@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl>https://github.com/DalSoft/DalSoft.Azure.Common/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/DalSoft/DalSoft.Azure.Common</projectUrl>
+    <!-- <iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl> -->
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>
+First release aims to make working with the Azure Service Bus as simple as possible. 
+Has sensible defaults and is fully injectable and testable. 
+
+Features include automatically managing subscriptions/closing connections, enqueue/message pump using Queues, and publish/subscribe using topics.
+	</description>
+    <releaseNotes>First release containing Service Bus Queue and Topic functionality.</releaseNotes>
+    <copyright>Copyright 2014</copyright>
+    <tags>Azure ServiceBus Queue Topic</tags>
+  </metadata>
+</package>

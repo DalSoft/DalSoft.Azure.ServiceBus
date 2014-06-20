@@ -19,7 +19,6 @@ namespace DalSoft.Azure.Common.Test.Unit.ServiceBus.Topic
         {
             _mockNamespaceManager = new Mock<INamespaceManager>();
             _mockNamespaceManager.Setup(x => x.GetTopic(It.IsAny<string>())).Returns(new TopicDescription("test"));
-            
             _mockTopicClient = new Mock<IServiceBusClientWrapper>();
         }
 

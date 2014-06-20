@@ -8,7 +8,7 @@ using System.Xml;
 
 namespace DalSoft.Azure.Common.ServiceBus
 {
-    internal class ServiceBusCommon<TQueue> : IDisposable
+    internal sealed class ServiceBusCommon<TQueue> : IDisposable
     {
         private readonly IServiceBusClientWrapper _serviceBusClient;
         private readonly Func<IServiceBusClientWrapper> _onMessageClient;

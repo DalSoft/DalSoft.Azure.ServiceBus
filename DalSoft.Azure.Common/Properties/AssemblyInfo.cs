@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: InternalsVisibleTo("DalSoft.Azure.Common.Test.Unit")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 [assembly: AssemblyTitle("DalSoft.Azure.Common")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]

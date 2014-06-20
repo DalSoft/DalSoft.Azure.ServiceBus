@@ -2,7 +2,7 @@
 
 namespace DalSoft.Azure.Common.ServiceBus
 {
-    public class NamespaceManager : INamespaceManager
+    public sealed class NamespaceManager : INamespaceManager
     {
         private readonly Microsoft.ServiceBus.NamespaceManager _namespaceManager;
 

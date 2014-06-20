@@ -5,16 +5,15 @@ using System.Threading.Tasks;
 
 namespace DalSoft.Azure.Common.ServiceBus.Queue
 {
-    
     public sealed class Queue<TQueue> : IQueue<TQueue>
     {
         private readonly INamespaceManager _namespaceManager;
         private readonly ServiceBusCommon<TQueue> _serviceBusCommon;
         public string QueueName { get { return ServiceBusCommon<TQueue>.GetName(); } }
 
-        public Queue(string connectionString) : this(new NamespaceManager(connectionString), new QueueClientClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), null) { }
+        public Queue(string connectionString) : this(new NamespaceManager(connectionString), new QueueClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), null) { }
 
-        public Queue(string connectionString, int maxDeliveryCount) : this(new NamespaceManager(connectionString), new QueueClientClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), maxDeliveryCount) { }
+        public Queue(string connectionString, int maxDeliveryCount) : this(new NamespaceManager(connectionString), new QueueClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), maxDeliveryCount) { }
 
         internal Queue(INamespaceManager namespaceManager, IServiceBusClientWrapper serviceBusClient, Func<IServiceBusClientWrapper> queuePumpClient, int? maxDeliveryCount) //Unit test seam 
         {
@@ -113,7 +112,7 @@ namespace DalSoft.Azure.Common.ServiceBus.Queue
 
         private static IServiceBusClientWrapper CreatePumpClient(string connectionString)
         {   //Used so we ensure we manage the lifecycle of the pump and are able to close it
-            return new QueueClientClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName());
+            return new QueueClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName());
         }
 
         public void Dispose()

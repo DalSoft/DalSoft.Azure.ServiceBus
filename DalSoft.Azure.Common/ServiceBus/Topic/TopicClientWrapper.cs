@@ -12,7 +12,6 @@ namespace DalSoft.Azure.Common.ServiceBus.Topic
         private readonly TopicClient _topicClient;
         private SubscriptionClient _subscriptionClient;
 
-        
         public TopicClientWrapper(string connectionString, string topicName)
         {
             _connectionString = connectionString;
