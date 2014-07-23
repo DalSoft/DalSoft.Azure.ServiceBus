@@ -61,5 +61,24 @@ namespace DalSoft.Azure.Common.Test.Integration.ServiceBus.Topic
             consumer.Dispose();
             consumer2.Dispose();
         }
+
+        [Test]
+        public void Ctor_DeleteSubscriptionOnDisposeIsTrueAndSubscriptionIdIsNotNull_DeletesSubscriptionOnDispose()
+        {
+            var subscriptionId = Guid.NewGuid().ToString();
+            string topicName;
+            using (var topic = new Topic<TestTopic>(ConnectionString, subscriptionId))
+            {
+                topicName = topic.TopicName;
+                topic.Subscribe(async message => //First Subscriber
+                {
+                    await Task.FromResult(0);
+                }); //Give it time to process the message
+
+                Assert.That(NamespaceManager.CreateFromConnectionString(ConnectionString).SubscriptionExists(topicName, subscriptionId), Is.True);
+            }
+
+            Assert.That(NamespaceManager.CreateFromConnectionString(ConnectionString).SubscriptionExists(topicName, subscriptionId), Is.False);
+        }
     }
 }
