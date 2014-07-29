@@ -1,2 +1,2 @@
-DalSoft.Azure.Common
+DalSoft.Azure.ServiceBus
 ====================
