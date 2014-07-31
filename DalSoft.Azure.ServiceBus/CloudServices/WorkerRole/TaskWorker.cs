@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.ServiceRuntime;
 
-namespace DalSoft.Azure.Common.CloudServices.WorkerRole
+namespace DalSoft.Azure.ServiceBus.CloudServices.WorkerRole
 {
     //Based on the Compute Resource Consolidation Pattern article by the Microsoft Patterns and Practices team http://msdn.microsoft.com/en-us/library/dn589778.aspx
     public abstract class TaskWorker : RoleEntryPoint

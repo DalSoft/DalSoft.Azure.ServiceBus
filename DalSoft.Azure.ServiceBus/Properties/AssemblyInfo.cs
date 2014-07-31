@@ -7,11 +7,11 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 [assembly: InternalsVisibleTo("DalSoft.Azure.ServiceBus.Test.Unit")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
-[assembly: AssemblyTitle("DalSoft.Azure.Common")]
+[assembly: AssemblyTitle("DalSoft.Azure.ServiceBus")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("DalSoft")]
-[assembly: AssemblyProduct("DalSoft.Azure.Common")]
+[assembly: AssemblyProduct("DalSoft.Azure.ServiceBus")]
 [assembly: AssemblyCopyright("Copyright ©  2013")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
