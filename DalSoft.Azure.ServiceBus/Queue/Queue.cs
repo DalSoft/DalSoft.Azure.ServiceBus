@@ -11,22 +11,21 @@ namespace DalSoft.Azure.ServiceBus.Queue
         private readonly ServiceBusCommon<TQueue> _serviceBusCommon;
         public string QueueName { get { return ServiceBusCommon<TQueue>.GetName(); } }
 
-        public Queue(string connectionString) : this(new NamespaceManager(connectionString), new QueueClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), null) { }
+        public Queue(string connectionString) : this(new NamespaceManager(connectionString), new QueueClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), new Settings()) { }
 
-        public Queue(string connectionString, int maxDeliveryCount) : this(new NamespaceManager(connectionString), new QueueClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), maxDeliveryCount) { }
+        public Queue(string connectionString, Settings settings) : this(new NamespaceManager(connectionString), new QueueClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), settings) { }
 
-        internal Queue(INamespaceManager namespaceManager, IServiceBusClientWrapper serviceBusClient, Func<IServiceBusClientWrapper> queuePumpClient, int? maxDeliveryCount) //Unit test seam 
+        internal Queue(INamespaceManager namespaceManager, IServiceBusClientWrapper serviceBusClient, Func<IServiceBusClientWrapper> queuePumpClient, Settings settings) //Unit test seam 
         {
             _namespaceManager = namespaceManager;
 
             if (!_namespaceManager.QueueExists(ServiceBusCommon<TQueue>.GetName()))
             {
-                _namespaceManager.CreateQueue(ServiceBusCommon<TQueue>.GetName(), maxDeliveryCount ?? 10); //10 is the Azure default
+                _namespaceManager.CreateQueue(ServiceBusCommon<TQueue>.GetName(), settings); //10 is the Azure default
             }
             else
             {
-                if (maxDeliveryCount.HasValue && _namespaceManager.GetQueue(ServiceBusCommon<TQueue>.GetName()).MaxDeliveryCount != maxDeliveryCount.Value)
-                    throw new InvalidOperationException("The Azure SDK 2.3 only lets you set the MaxDeliveryCount when first creating the Queue. For existing queues you will need to change the MaxDeliveryCount manually via the Azure portal.");
+               settings.Vaildate<TQueue>(_namespaceManager);
             }
 
             _serviceBusCommon = new ServiceBusCommon<TQueue>(serviceBusClient, queuePumpClient);

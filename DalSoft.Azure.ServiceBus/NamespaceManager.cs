@@ -43,9 +43,13 @@ namespace DalSoft.Azure.ServiceBus
             return _namespaceManager.SubscriptionExists(path, subscriptionName);
         }
 
-        public QueueDescription CreateQueue(string path, int maxDeliveryCount)
-        {
-            return _namespaceManager.CreateQueue(new QueueDescription(path) { MaxDeliveryCount = maxDeliveryCount });
+        public QueueDescription CreateQueue(string path, Settings settings)
+        {   // ReSharper disable PossibleInvalidOperationException
+            return _namespaceManager.CreateQueue(new QueueDescription(path)
+            {
+                MaxDeliveryCount = settings.MaxDeliveryCount.Value
+            });
+            // ReSharper restore PossibleInvalidOperationException
         }
 
         public TopicDescription CreateTopic(string path)

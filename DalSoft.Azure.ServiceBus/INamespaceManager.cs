@@ -7,7 +7,7 @@ namespace DalSoft.Azure.ServiceBus
         bool QueueExists(string path);
         bool TopicExists(string path);
         bool SubscriptionExists(string path, string subscriptionName);
-        QueueDescription CreateQueue(string path, int maxDeliveryCount);
+        QueueDescription CreateQueue(string path, Settings settings);
         TopicDescription CreateTopic(string path);
         SubscriptionDescription CreateSubscription(string path, string subscriptionName);
         QueueDescription GetQueue(string path);

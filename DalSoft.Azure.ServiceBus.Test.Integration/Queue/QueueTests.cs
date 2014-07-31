@@ -188,7 +188,7 @@ namespace DalSoft.Azure.ServiceBus.Test.Integration.Queue
         [Test]
         public async void Ctor_SettingMaxDeliveryCount_MessageIsTriedForTheMaxDeliveryCountAndThenDeadLettered()
         {
-            using (var queue = new Queue<TestQueue>(ConnectionString, 3))
+            using (var queue = new Queue<TestQueue>(ConnectionString, new Settings{MaxDeliveryCount = 3 }))
             {
                 var messageTries = 0;
 

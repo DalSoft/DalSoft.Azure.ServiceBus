@@ -11,7 +11,7 @@ namespace DalSoft.Azure.ServiceBus.Test.Unit.Queue
     {
         public const int MaxDeliveryCount = 3;
         private Mock<INamespaceManager> _mockNamespaceManager;
-        private Mock<ServiceBus.IServiceBusClientWrapper> _mockQueueClient;
+        private Mock<IServiceBusClientWrapper> _mockQueueClient;
 
         [SetUp]
         public void SetUp()
@@ -19,7 +19,7 @@ namespace DalSoft.Azure.ServiceBus.Test.Unit.Queue
             _mockNamespaceManager = new Mock<INamespaceManager>();
             _mockNamespaceManager.Setup(x => x.GetQueue(It.IsAny<string>())).Returns(new QueueDescription("test"){ MaxDeliveryCount = MaxDeliveryCount });
             
-            _mockQueueClient = new Mock<ServiceBus.IServiceBusClientWrapper>();
+            _mockQueueClient = new Mock<IServiceBusClientWrapper>();
         }
 
         [Test]
@@ -27,9 +27,9 @@ namespace DalSoft.Azure.ServiceBus.Test.Unit.Queue
         {
             _mockNamespaceManager.Setup(x => x.QueueExists(It.IsAny<string>())).Returns(false);
             
-            new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<ServiceBus.IServiceBusClientWrapper>().Object, MaxDeliveryCount);
+            new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusClientWrapper>().Object, It.Is<Settings>(s=>s.MaxDeliveryCount==MaxDeliveryCount));
 
-            _mockNamespaceManager.Verify(x => x.CreateQueue(It.IsAny<string>(), MaxDeliveryCount), Times.Once());
+            _mockNamespaceManager.Verify(x => x.CreateQueue(It.IsAny<string>(), It.Is<Settings>(s=>s.MaxDeliveryCount==MaxDeliveryCount)), Times.Once());
         }
 
         [Test]
@@ -37,9 +37,9 @@ namespace DalSoft.Azure.ServiceBus.Test.Unit.Queue
         {
             _mockNamespaceManager.Setup(x => x.QueueExists(It.IsAny<string>())).Returns(true);
 
-            new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<ServiceBus.IServiceBusClientWrapper>().Object, MaxDeliveryCount);
+            new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusClientWrapper>().Object, It.Is<Settings>(s=>s.MaxDeliveryCount==MaxDeliveryCount));
 
-            _mockNamespaceManager.Verify(x => x.CreateQueue(It.IsAny<string>(), MaxDeliveryCount), Times.Never());
+            _mockNamespaceManager.Verify(x => x.CreateQueue(It.IsAny<string>(), It.Is<Settings>(s=>s.MaxDeliveryCount==MaxDeliveryCount)), Times.Never());
         }
 
         [Test]
@@ -49,7 +49,7 @@ namespace DalSoft.Azure.ServiceBus.Test.Unit.Queue
             _mockNamespaceManager.Setup(x => x.QueueExists(It.IsAny<string>())).Returns(true);
             _mockNamespaceManager.Setup(x => x.GetQueue(It.IsAny<string>())).Returns(new QueueDescription("test") { MaxDeliveryCount = differentMaxDeliveryCount });
             
-            Assert.Throws<InvalidOperationException>(()=> new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<ServiceBus.IServiceBusClientWrapper>().Object, MaxDeliveryCount), "The Azure SDK 2.3 only lets you set the MaxDeliveryCount when first creating the Queue. For existing queues you will need to change the MaxDeliveryCount manually via the Azure portal.");
+            Assert.Throws<InvalidOperationException>(()=> new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusClientWrapper>().Object, It.Is<Settings>(s=>s.MaxDeliveryCount==MaxDeliveryCount)), "The Azure SDK 2.3 only lets you set the MaxDeliveryCount when first creating the Queue. For existing queues you will need to change the MaxDeliveryCount manually via the Azure portal.");
         }
 
         [Test]
@@ -65,11 +65,11 @@ namespace DalSoft.Azure.ServiceBus.Test.Unit.Queue
         [Test]
         public void DeleteQueue_TheCorrectQueueIsDeleted()
         {
-            var expectedQueueToBeDeleted = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<ServiceBus.IServiceBusClientWrapper>().Object, MaxDeliveryCount).QueueName;
+            var expectedQueueToBeDeleted = new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusClientWrapper>().Object, It.Is<Settings>(s=>s.MaxDeliveryCount==MaxDeliveryCount)).QueueName;
 
             _mockNamespaceManager.Setup(x => x.QueueExists(It.IsAny<string>())).Returns(false);
 
-            new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<ServiceBus.IServiceBusClientWrapper>().Object, MaxDeliveryCount).DeleteQueue();
+            new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusClientWrapper>().Object, It.Is<Settings>(s=>s.MaxDeliveryCount==MaxDeliveryCount)).DeleteQueue();
 
             _mockNamespaceManager.Verify(x => x.DeleteQueue(expectedQueueToBeDeleted), Times.Once());
         }
@@ -79,14 +79,14 @@ namespace DalSoft.Azure.ServiceBus.Test.Unit.Queue
         {
             const string queueNameByConvention = "DalSoft.Azure.ServiceBus.Test.Unit.TestQueue";
 
-            Assert.That(new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<ServiceBus.IServiceBusClientWrapper>().Object, MaxDeliveryCount).QueueName, Is.EqualTo(queueNameByConvention));
+            Assert.That(new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<IServiceBusClientWrapper>().Object, It.Is<Settings>(s=>s.MaxDeliveryCount==MaxDeliveryCount)).QueueName, Is.EqualTo(queueNameByConvention));
         }
 
         [Test]
         public void GetQueueName_QueueNameByConventionIsGreaterThan260Characters_ThrowsArgumentException()
         {
             const string expectedMessage = "Queue name can't be > 260 characters. Make your namespace or class name shorter.";
-            var exceptionResult = Assert.Throws<ArgumentException>(() => new Queue<TestQueueGreaterThan260Charactersxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<ServiceBus.IServiceBusClientWrapper>().Object, MaxDeliveryCount));
+            var exceptionResult = Assert.Throws<ArgumentException>(() => new Queue<TestQueueGreaterThan260Charactersxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>(_mockNamespaceManager.Object, _mockQueueClient.Object, ()=>new Mock<ServiceBus.IServiceBusClientWrapper>().Object, It.Is<Settings>(s=>s.MaxDeliveryCount==MaxDeliveryCount)));
 
             Assert.That(exceptionResult.Message, Is.EqualTo(expectedMessage));
         }

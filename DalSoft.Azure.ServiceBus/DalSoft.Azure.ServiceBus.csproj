@@ -57,6 +57,7 @@
     <Compile Include="ServiceBusCommon.cs" />
     <Compile Include="Queue\IQueue.cs" />
     <Compile Include="Queue\Queue.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="Topic\ITopic.cs" />
     <Compile Include="NamespaceManager.cs" />
     <Compile Include="OnMessageException.cs" />
