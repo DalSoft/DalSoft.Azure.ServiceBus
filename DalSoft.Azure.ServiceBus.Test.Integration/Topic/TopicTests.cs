@@ -32,7 +32,7 @@ namespace DalSoft.Azure.ServiceBus.Test.Integration.Topic
             consumer.Subscribe(async message => //First Subscriber
             {
                 receievedMessage = message;
-                receivedCount++;
+                Interlocked.Increment(ref receivedCount);
                 await Task.FromResult(0);
             }, new CancellationTokenSource(TestTimeout * 2)); //Give it time to process the message
 
@@ -40,7 +40,7 @@ namespace DalSoft.Azure.ServiceBus.Test.Integration.Topic
             consumer2.Subscribe(async message => //second Subscriber
             {
                 receievedMessage = message;
-                receivedCount++;
+                Interlocked.Increment(ref receivedCount);
                 await Task.FromResult(0);
             }, new CancellationTokenSource(TestTimeout * 2));
 

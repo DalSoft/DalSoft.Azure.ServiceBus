@@ -1,4 +1,5 @@
-﻿using Microsoft.ServiceBus.Messaging;
+﻿using System.CodeDom;
+using Microsoft.ServiceBus.Messaging;
 
 namespace DalSoft.Azure.ServiceBus
 {
@@ -44,12 +45,18 @@ namespace DalSoft.Azure.ServiceBus
         }
 
         public QueueDescription CreateQueue(string path, Settings settings)
-        {   // ReSharper disable PossibleInvalidOperationException
-            return _namespaceManager.CreateQueue(new QueueDescription(path)
+        {   
+            var queueDescription = new QueueDescription(path)
             {
-                MaxDeliveryCount = settings.MaxDeliveryCount.Value
-            });
-            // ReSharper restore PossibleInvalidOperationException
+                RequiresDuplicateDetection = settings.RequireDuplicateDetection
+            };
+
+            queueDescription.MaxDeliveryCount = settings.MaxDeliveryCount;
+
+            if (settings.DuplicateDetectionHistoryTimeWindow.HasValue)
+                queueDescription.DuplicateDetectionHistoryTimeWindow = settings.DuplicateDetectionHistoryTimeWindow.Value;
+
+            return _namespaceManager.CreateQueue(queueDescription);
         }
 
         public TopicDescription CreateTopic(string path)
