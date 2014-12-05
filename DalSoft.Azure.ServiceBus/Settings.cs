@@ -24,7 +24,7 @@ namespace DalSoft.Azure.ServiceBus
                 (DuplicateDetectionHistoryTimeWindow.HasValue && queueDescription.DuplicateDetectionHistoryTimeWindow != DuplicateDetectionHistoryTimeWindow)
             )
                 throw new InvalidOperationException(
-                    "The Azure SDK 2.3 only lets you set the MaxDeliveryCount when first creating the Queue. For existing queues you will need to change the MaxDeliveryCount manually via the Azure portal.");
+                    "The Azure SDK 2.3 only lets you set settings when first creating the Queue. For existing queues you will need to change the settings manually via the Azure portal.");
         }
     }
 }
