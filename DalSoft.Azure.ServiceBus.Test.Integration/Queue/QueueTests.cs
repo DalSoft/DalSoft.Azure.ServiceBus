@@ -30,6 +30,28 @@ namespace DalSoft.Azure.ServiceBus.Test.Integration.Queue
         }
 
         [Test]
+        public void Queue_CreateQueue_SettingsAreCorrect()
+        {
+            var maxDelievryCount = 4;
+            var requireDuplicateDetection = true;
+            var duplicateDetectionHistoryTimeWindow = new TimeSpan(0, 10, 0);
+            var settings = new Settings
+            {
+                MaxDeliveryCount = maxDelievryCount,    
+                RequireDuplicateDetection = requireDuplicateDetection,
+                DuplicateDetectionHistoryTimeWindow = duplicateDetectionHistoryTimeWindow
+            };
+
+            using (var queue = new Queue<TestQueue>(ConnectionString, settings))
+            {
+                var queueDescription = Microsoft.ServiceBus.NamespaceManager.CreateFromConnectionString(ConnectionString).GetQueue(queue.QueueName);
+                Assert.That(queueDescription.MessageCount, Is.EqualTo(0));
+                Assert.That(queueDescription.RequiresDuplicateDetection, Is.EqualTo(requireDuplicateDetection));
+                Assert.That(queueDescription.DuplicateDetectionHistoryTimeWindow, Is.EqualTo(duplicateDetectionHistoryTimeWindow));
+            }
+        }
+
+        [Test]
         public async void Pump_ProvidedWithMessage_MessageIsReceivedAndRemovedFromQueue()
         {
             TestMessage receievedMessage = null;

@@ -27,10 +27,13 @@ namespace DalSoft.Azure.ServiceBus.Test.Unit.Queue
         {
             _mockNamespaceManager.Setup(x => x.QueueExists(It.IsAny<string>())).Returns(false);
 
-            new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object,
-                () => new Mock<IServiceBusClientWrapper>().Object, new Settings {MaxDeliveryCount = MaxDeliveryCount});
+            var requiresDuplicateDetection = true;
+            var duplicateDetectionHistoryTimeWindow = new TimeSpan(0, 1, 0);
 
-            _mockNamespaceManager.Verify(x => x.CreateQueue(It.IsAny<string>(), It.Is<Settings>(s=>s.MaxDeliveryCount==MaxDeliveryCount)), Times.Once());
+            new Queue<TestQueue>(_mockNamespaceManager.Object, _mockQueueClient.Object,
+                () => new Mock<IServiceBusClientWrapper>().Object, new Settings {MaxDeliveryCount = MaxDeliveryCount, RequireDuplicateDetection = requiresDuplicateDetection, DuplicateDetectionHistoryTimeWindow = duplicateDetectionHistoryTimeWindow});
+
+            _mockNamespaceManager.Verify(x => x.CreateQueue(It.IsAny<string>(), It.Is<Settings>(s=>s.MaxDeliveryCount==MaxDeliveryCount && s.RequireDuplicateDetection == requiresDuplicateDetection && s.DuplicateDetectionHistoryTimeWindow == duplicateDetectionHistoryTimeWindow)), Times.Once());
         }
 
         [Test]

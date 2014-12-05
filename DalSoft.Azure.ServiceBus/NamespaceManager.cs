@@ -45,16 +45,19 @@ namespace DalSoft.Azure.ServiceBus
         }
 
         public QueueDescription CreateQueue(string path, Settings settings)
-        {   
-            var queueDescription = new QueueDescription(path)
+        {
+            var queueDescription = new QueueDescription(path);
+
+            if (settings != null)
             {
-                RequiresDuplicateDetection = settings.RequireDuplicateDetection
-            };
+                queueDescription.RequiresDuplicateDetection = settings.RequireDuplicateDetection;
 
-            queueDescription.MaxDeliveryCount = settings.MaxDeliveryCount;
+                if (settings.MaxDeliveryCount.HasValue)
+                    queueDescription.MaxDeliveryCount = settings.MaxDeliveryCount.Value;
 
-            if (settings.DuplicateDetectionHistoryTimeWindow.HasValue)
-                queueDescription.DuplicateDetectionHistoryTimeWindow = settings.DuplicateDetectionHistoryTimeWindow.Value;
+                if (settings.DuplicateDetectionHistoryTimeWindow.HasValue)
+                    queueDescription.DuplicateDetectionHistoryTimeWindow = settings.DuplicateDetectionHistoryTimeWindow.Value;
+            }
 
             return _namespaceManager.CreateQueue(queueDescription);
         }

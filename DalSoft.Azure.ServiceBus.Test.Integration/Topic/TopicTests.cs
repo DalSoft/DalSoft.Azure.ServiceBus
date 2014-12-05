@@ -16,48 +16,62 @@ namespace DalSoft.Azure.ServiceBus.Test.Integration.Topic
         private const int TestTimeout = 1500;
         private static readonly string ConnectionString = ConfigurationManager.AppSettings["Microsoft.ServiceBus.ConnectionString"];
 
+        [SetUp]
+        public void SetUp()
+        {
+            Monitor.Enter(Lock); //Access the TestQueue one test at a time
+        }
+
         [TearDown]
         public void TearDown()
         {
            new Topic<TestTopic>(ConnectionString, Guid.NewGuid().ToString()).DeleteTopic(); //Ensure queue is delete at the end of each test
+           Monitor.Exit(Lock); //Access the TestQueue one test at a time
         }
 
         [Test]
-        public async void Subscribe_ProvidedWithMessage_MessageIsReceivedByEachSubscriberAndRemoved()
+        public async Task Subscribe_ProvidedWithMessage_MessageIsReceivedByEachSubscriberAndRemoved()
         {
             TestMessage receievedMessage = null;
             var receivedCount = 0;
 
-            var consumer = new Topic<TestTopic>(ConnectionString, Guid.NewGuid().ToString());
-            consumer.Subscribe(async message => //First Subscriber
+            using (var consumer = new Topic<TestTopic>(ConnectionString, Guid.NewGuid().ToString()))
+            using (var consumer2 = new Topic<TestTopic>(ConnectionString, Guid.NewGuid().ToString()))
             {
-                receievedMessage = message;
-                Interlocked.Increment(ref receivedCount);
-                await Task.FromResult(0);
-            }, new CancellationTokenSource(TestTimeout * 2)); //Give it time to process the message
+                consumer.Subscribe(async message => //First Subscriber
+                {
+                    receievedMessage = message;
+                    Interlocked.Increment(ref receivedCount);
+                    await Task.FromResult(0);
+                }, new CancellationTokenSource(TestTimeout*10)); //Give it time to process the message
 
-            var consumer2 = new Topic<TestTopic>(ConnectionString, Guid.NewGuid().ToString());
-            consumer2.Subscribe(async message => //second Subscriber
-            {
-                receievedMessage = message;
-                Interlocked.Increment(ref receivedCount);
-                await Task.FromResult(0);
-            }, new CancellationTokenSource(TestTimeout * 2));
 
-            using (var producer = new Topic<TestTopic>(ConnectionString))
-            {
-                await producer.Publish(new TestMessage { Id = 1, Name = "My Test" });
+                consumer2.Subscribe(async message => //second Subscriber
+                {
+                    receievedMessage = message;
+                    Interlocked.Increment(ref receivedCount);
+                    await Task.FromResult(0);
+                }, new CancellationTokenSource(TestTimeout*10));
+
+                using (var producer = new Topic<TestTopic>(ConnectionString))
+                {
+                    await producer.Publish(new TestMessage {Id = 1, Name = "My Test"});
+                }
+
+                await Task.Delay(TestTimeout*10); //Give it time to process the message
+
+                Assert.That(receivedCount, Is.EqualTo(2));
+                Assert.That(receievedMessage.Id, Is.EqualTo(1));
+                Debug.WriteLine(
+                    Microsoft.ServiceBus.NamespaceManager.CreateFromConnectionString(ConnectionString)
+                        .GetSubscription(consumer.TopicName, consumer.SubscriptionId)
+                        .MessageCount);
+                Debug.WriteLine(
+                    Microsoft.ServiceBus.NamespaceManager.CreateFromConnectionString(ConnectionString)
+                        .GetSubscription(consumer2.TopicName, consumer2.SubscriptionId)
+                        .MessageCount);
+
             }
-            
-            await Task.Delay(TestTimeout * 2); //Give it time to process the message
-            
-            Assert.That(receivedCount, Is.EqualTo(2));
-            Assert.That(receievedMessage.Id, Is.EqualTo(1));
-            Debug.WriteLine(Microsoft.ServiceBus.NamespaceManager.CreateFromConnectionString(ConnectionString).GetSubscription(consumer.TopicName, consumer.SubscriptionId).MessageCount);
-            Debug.WriteLine(Microsoft.ServiceBus.NamespaceManager.CreateFromConnectionString(ConnectionString).GetSubscription(consumer2.TopicName, consumer2.SubscriptionId).MessageCount);
-
-            consumer.Dispose();
-            consumer2.Dispose();
         }
 
         [Test]

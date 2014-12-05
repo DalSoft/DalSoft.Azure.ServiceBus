@@ -11,7 +11,7 @@ namespace DalSoft.Azure.ServiceBus.Queue
         private readonly ServiceBusCommon<TQueue> _serviceBusCommon;
         public string QueueName { get { return ServiceBusCommon<TQueue>.GetName(); } }
 
-        public Queue(string connectionString) : this(new NamespaceManager(connectionString), new QueueClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), new Settings()) { }
+        public Queue(string connectionString) : this(new NamespaceManager(connectionString), new QueueClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), null) { }
 
         public Queue(string connectionString, Settings settings) : this(new NamespaceManager(connectionString), new QueueClientWrapper(connectionString, ServiceBusCommon<TQueue>.GetName()), () => CreatePumpClient(connectionString), settings) { }
 
@@ -21,9 +21,9 @@ namespace DalSoft.Azure.ServiceBus.Queue
 
             if (!_namespaceManager.QueueExists(ServiceBusCommon<TQueue>.GetName()))
             {
-                _namespaceManager.CreateQueue(ServiceBusCommon<TQueue>.GetName(), settings); //10 is the Azure default
+                _namespaceManager.CreateQueue(ServiceBusCommon<TQueue>.GetName(), settings ?? new Settings()); //10 is the Azure default
             }
-            else
+            else if(settings != null)
             {
                settings.Vaildate<TQueue>(_namespaceManager);
             }
